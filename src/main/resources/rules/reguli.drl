@@ -1,0 +1,71 @@
+package rules;
+
+import com.entities.*;
+import com.enums.*;
+import java.util.List;
+
+
+rule "scor FICO 800"
+when
+f:Fico(total>=800);
+then
+System.out.println("Clientul "+ f.getPotentialCustomer().getName()
++ "este extrem de eligibil pentru acordarea creditului solicitat.");
+end
+
+rule "scor FICO 400"
+when
+f:Fico(total<=400);
+then
+System.out.println("Clientul "+ f.getPotentialCustomer().getName()
++ "nu prezinta incredere pentru acordarea creditului solicitant.");
+end
+
+rule "scor FICO 400-800"
+when
+h:History()
+f:Fico(total>=400 && total<=800)
+then
+System.out.println("Clientul "+ f.getPotentialCustomer().getName()
++ " are urmatoarea situatie: \n " + h.getIsFirstCredit()
++" - primul credit \n"  + h.getActiveNumbOfCredits() 
++ " - numar credite activ \n" + h.getRateOverdue() + " - rata restanta");
+end
+
+rule "regula 4"
+when
+h:History(activeNumbOfCredits==2)
+then
+h.getPotentialCustomer().setStatus(Status.DECLINED);
+System.out.println(h.getPotentialCustomer().toString());
+end
+
+
+rule "regula 5"
+when
+pc: PotentialCustomer( age == 18 )
+cp: CustomerProduct( potentialCustomer == pc )
+then
+cp.setInterestPc(6.00);
+cp.setInterestValue(cp.getCreditValue() * cp.getInterestPc() / 100);
+System.out.println("Potentialul client cu numele " + pc.getName() + " are dobanda fixa de " + cp.getInterestPc()+
+"% (" + cp.getInterestValue() + ").");
+end
+
+rule "regula 6"
+when
+f: Fico( total > 800 )
+then
+	if (f.getFirstThreeScores().size()<=3){
+		f.getPotentialCustomer().getGeneralCosts().setCommision(0.00);
+		f.getFirstThreeScores().add(f);
+	}
+	else{
+		System.out.println("Din pacate nu mai beneficiati de comision 0");
+	}
+end
+
+
+
+
+
