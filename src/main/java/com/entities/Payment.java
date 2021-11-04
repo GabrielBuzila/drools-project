@@ -3,6 +3,13 @@ package com.entities;
 import java.time.LocalDate;
 
 public class Payment {
+	public Payment(Double totalAmount, LocalDate dateOfPayment, LocalDate dueDate, Integer remainingRates) {
+		this.totalAmount = totalAmount;
+		this.dateOfPayment = dateOfPayment;
+		this.dueDate = dueDate;
+		this.remainingRates = remainingRates;
+	}
+
 	Double totalAmount;
 	LocalDate dateOfPayment;
 	LocalDate dueDate;

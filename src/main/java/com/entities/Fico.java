@@ -20,13 +20,15 @@ public class Fico {
 	Integer total;
 
 	
-	List<Fico> firstThreeScores = new ArrayList<>();
+	List<PotentialCustomer> firstThreeScores = new ArrayList<PotentialCustomer>();
 	
-	public List<Fico> getFirstThreeScores() {
-		return firstThreeScores;
+	public void addCustomer(PotentialCustomer pc) {
+		firstThreeScores.add(pc);
 	}
 	
-	
+	public List<PotentialCustomer> getFirstThreeScores() {
+		return firstThreeScores;
+	}
 
 	public PotentialCustomer getPotentialCustomer() {
 		return potentialCustomer;

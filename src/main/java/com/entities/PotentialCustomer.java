@@ -14,7 +14,29 @@ public class PotentialCustomer {
 	Double creditLimit;
 	Status status;
 	GeneralCosts generalCosts;
-
+	
+	public PotentialCustomer(
+			String name,
+			Integer age,
+			String nationality,
+			MaritalStatus maritalStatus,
+			Integer expActualJob,
+			Double salary,
+			Integer dependents,
+			Double creditLimit,
+			Status status,
+			GeneralCosts generalCosts) {
+		this.name = name;
+		this.age = age;
+		this.nationality = nationality;
+		this.maritalStatus = maritalStatus;
+		this.expActualJob = expActualJob;
+		this.salary = salary;
+		this.dependents = dependents;
+		this.creditLimit = creditLimit;
+		this.status = status;
+		this.generalCosts = generalCosts;
+	}
 	
 	public String getName() {
 		return name;

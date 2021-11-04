@@ -3,69 +3,193 @@ package rules;
 import com.entities.*;
 import com.enums.*;
 import java.util.List;
+import java.time.LocalDate;
 
-
+//Daca scorul FICO este mai mare sau egal cu 800 pct, atunci va aparea mesajul “Clientul X este extrem de eligibil 
+//pentru acordarea creditului solicitat”
 rule "scor FICO 800"
 when
 f:Fico(total>=800);
 then
-System.out.println("Clientul "+ f.getPotentialCustomer().getName()
-+ "este extrem de eligibil pentru acordarea creditului solicitat.");
+System.out.println("Regula 1: Clientul "+ f.getPotentialCustomer().getName()
++ " este extrem de eligibil pentru acordarea creditului solicitat.");
 end
 
+//Daca scorul FICO este mai mic de 400 pct, atunci va aparea mesajul “Clientul X nu prezinta incredere pentru 
+//acordarea creditului solicitant. Exista un risc pe care banca si-l va asuma sau nu.”
 rule "scor FICO 400"
 when
 f:Fico(total<=400);
 then
-System.out.println("Clientul "+ f.getPotentialCustomer().getName()
-+ "nu prezinta incredere pentru acordarea creditului solicitant.");
+System.out.println("Regula 2: Clientul "+ f.getPotentialCustomer().getName()
++ " nu prezinta incredere pentru acordarea creditului solicitant.");
 end
 
+//Daca scorul FICO se incadreaza intre 400 si 800 pct, atunci va aparea mesajul “Clientul X are urmatoarea 
+//situatie: 2 credite active, 1 cu rata neplatita de 2 luni, 1 luat in ultima perioada. In aceasta situatie, 
+//clientului i se poate acorda creditul impunandu-se anumite clauze contractuale.”
 rule "scor FICO 400-800"
 when
 h:History()
 f:Fico(total>=400 && total<=800)
 then
-System.out.println("Clientul "+ f.getPotentialCustomer().getName()
+System.out.println("Regula 3: Clientul "+ f.getPotentialCustomer().getName()
 + " are urmatoarea situatie: \n " + h.getIsFirstCredit()
 +" - primul credit \n"  + h.getActiveNumbOfCredits() 
 + " - numar credite activ \n" + h.getRateOverdue() + " - rata restanta");
 end
 
-rule "regula 4"
+//Daca clientul are active 2 credite, al treilea credit nu mai poate fi acordat, indiferent de scorul FICO.
+rule "client 2 credite active"
 when
 h:History(activeNumbOfCredits==2)
 then
 h.getPotentialCustomer().setStatus(Status.DECLINED);
-System.out.println(h.getPotentialCustomer().toString());
+System.out.println("Regula 4: Clientul A are statusul cererii - " + h.getPotentialCustomer().getStatus().toString());
 end
 
-
-rule "regula 5"
+//Clientii cu varsta de 18 ani primesc dobanda fixa de 6%
+rule "clienti cu varsta de 18 ani"
 when
 pc: PotentialCustomer( age == 18 )
 cp: CustomerProduct( potentialCustomer == pc )
 then
 cp.setInterestPc(6.00);
 cp.setInterestValue(cp.getCreditValue() * cp.getInterestPc() / 100);
-System.out.println("Potentialul client cu numele " + pc.getName() + " are dobanda fixa de " + cp.getInterestPc()+
+System.out.println("Regula 5: Potentialul client cu numele " + pc.getName() + " are dobanda fixa de " + cp.getInterestPc()+
 "% (" + cp.getInterestValue() + ").");
 end
 
-rule "regula 6"
+//Primii 3 clienti care au un scor de peste 800 pct primesc gratuit serviciul de simulare a creditului.
+rule "primii 3 clienti"
 when
+pc: PotentialCustomer()
 f: Fico( total > 800 )
 then
-	if (f.getFirstThreeScores().size()<=3){
-		f.getPotentialCustomer().getGeneralCosts().setCommision(0.00);
-		f.getFirstThreeScores().add(f);
-	}
-	else{
-		System.out.println("Din pacate nu mai beneficiati de comision 0");
-	}
+if (f.getFirstThreeScores().size()<=3){
+f.getPotentialCustomer().getGeneralCosts().setCommision(0.00);
+f.getFirstThreeScores().add(pc);
+System.out.println("Regula 6: Beneficiati de comision 0 la simularea creditului!");
+}
 end
 
+//Clientii cu minim 1 an la aclualul loc de munca, beneficiaza de comision 0 la analiza dosarului.
+rule "clienti minim 1 an experienta"
+when
+pc: PotentialCustomer( expActualJob >= 1 )
+gc: GeneralCosts()
+then
+gc.setCommision(0.00);
+System.out.println("Regula 7: Potentialul client cu numele " + pc.getName() + " beneficiaza de comision 0 pentru vechime mai mare de 1 an la locul de munca.");
+end
+
+//Clientilor care iau pentru prima data un credit ipotecar le este asigurata plata taxei de inregistrare la RNPM.
+rule "primul credit ipotecar"
+when
+h: History ( isFirstCredit == true )
+pc: PotentialCustomer()
+gc: GeneralCosts()
+then
+gc.setRegisterTaxRNPM(0.00);
+System.out.println("Regula 8: Potentialul client cu numele " + pc.getName() + " beneficiaza de plata taxei de inregistrare la RNPM 0.");
+end
+
+//Daca suma creditata este mai mica decat 10 salarii lunare atunci scorul FICO porneste de la 200.
+rule "scor FICO start 200"
+when
+f:Fico()
+pc: PotentialCustomer()
+cp: CustomerProduct( creditValue <= pc.getSalary()*10 )
+then
+f.setTotal(200);
+System.out.println("Regula 9: Clientul "+ f.getPotentialCustomer().getName()+ " are scorul de pornire FICO 200.");
+end
+
+//Persoanele vaduve care doresc acordarea unui credit de nevoi personale, beneficiaza de plata primei rate.
+rule "Persoane vaduve prelungire data scadenta"
+when
+pc: PotentialCustomer( maritalStatus == MaritalStatus.WIDOW )
+p: Payment()
+cp: CustomerProduct ( p.getRemainingRates() == cp.getPeriod() )
+f: Fico()
+then
+p.setDateOfPayment(LocalDate.now().plusDays(30));//insert date time format
+System.out.println("Regula 10: Clientul "+ f.getPotentialCustomer().getName()
++ " are prima rata platita");
+end
+
+//Cand plata se face dupa data scadenta, scorul de promptitudine scade cu 0,01%
+rule "scor promptitudine FICO mai mic cu 0,01%"
+when
+p: Payment ( dateOfPayment > dueDate)
+f:Fico()
+then
+f.setPromptSc(f.getPromptSc() - f.getPromptSc()*1/100);
+System.out.println("Regula 11: Clientul "+ f.getPotentialCustomer().getName()
++ " are scorul de promptitudine scazut cu 0.01%.");
+end
+
+//Daca nu are credite in derulare, la toate rubricile in cauza se pune punctaj maxim ( fullPaidCreditSc, activeCreditSc)
+rule "punctaj maxim pentru credite in derulare"
+when
+h:History (activeNumbOfCredits == 0)
+f:Fico()
+then
+f.setFullPaidCreditSc(1000);
+f.setActiveCreditsSc(1000);
+System.out.println("Regula 12: Clientul "+ f.getPotentialCustomer().getName()
++ " are puctajul maxim la rubricile <credite platite integral> si <credite active>.");
+end
+
+//Daca clientul are rate neplatite in valoare mai mare de 5000 lei, creditul se respinge.
+rule "rate neplatite"
+when
+h:History(rateOverdue>=5000.00)
+f:Fico()
+pc:PotentialCustomer()
+then
+f.setTotal(0);
+pc.setStatus(Status.DECLINED);
+pc.setCreditLimit(0.00);
+System.out.println("Regula 13: Clientul "+ f.getPotentialCustomer().getName()
++ " nu este eligibil pentru a i se acorda un credit.");
+end
+
+//Daca clientul are mai mult de 4 persoane in intretinere, clientului i se acorda 200 pct FICO ca puncte de start.
+rule "4 persoane in intretinere"
+when
+pc:PotentialCustomer(dependents>=4)
+f:Fico()
+then
+f.setTotal(200);
+System.out.println("Regula 14: Clientul "+ f.getPotentialCustomer().getName()
++ " are mai mult de 4 persoane in intretinere si porneste in calculul FICO cu 200 pct.");
+end
+
+//Daca varsta clientului depaseste 70 de ani, clientul nu poate lua un credit mai mare de 10 000 euro.
+rule "client > 70 ani"
+when
+pc:PotentialCustomer(age>=70)
+f:Fico()
+then
+pc.setCreditLimit(10000.00);
+System.out.println("Regula 15: Clientul "+ f.getPotentialCustomer().getName()
++ " are varsta " + f.getPotentialCustomer().getAge() + " si nu poate primi un credit mai mare de 10 000 EUR.");
+end
+
+//Daca clientul are de platiti rate din trecut care intre 10 000 - 15 000 lei (reprezentand intre 10-15% din valoarea creditului), atunci scorul FICO la suma restanta va fi de 600.  .
+/*rule "client prompt"
+when
+h:History(rateOverdue >= 10000 && rateOverdue <15000)
+p:Payment(currency==Currency.LEI)
+f:Fico()
+then
+f.setRemainingAmountSc(600);
+System.out.println("Clientul "+ f.getPotentialCustomer().getName()
++ " are 600 puncte pentru partea de sume restante din scorul FICO.");
+end*/
 
 
-
-
+//FICO total = 0.05*promptSc + 0.1*overdueDateSc + 0.1*remainingAmountSc + 0.1*fullPaidCreditSc 
+//            + 0.1*creditTypeSc + 0.05*creditValueSc + 0.05*presentSoldSc + 0.1*activeCreditsSc
+//            + 0.15*oldestCredSc + 0.05*recentOpenCreditSc + 0.05*recentTypeCreditSc + 0.1*allTypeCreditSc

@@ -3,6 +3,11 @@ package com.entities;
 import com.enums.CreditType;
 
 public class Product {
+	public Product(CreditType type, Double maxValue) {
+		this.type = type;
+		this.maxValue = maxValue;
+	}
+
 	CreditType type;
 	Double maxValue;
 

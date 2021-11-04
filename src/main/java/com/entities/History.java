@@ -5,7 +5,6 @@ public class History {
 	Boolean isFirstCredit;
 	Integer activeNumbOfCredits;
 	Double rateOverdue;
-
 	
 	public PotentialCustomer getPotentialCustomer() {
 		return potentialCustomer;
@@ -36,6 +35,17 @@ public class History {
 	}
 
 	public void setRateOverdue(Double rateOverdue) {
+		this.rateOverdue = rateOverdue;
+	}
+	
+	public History (
+			PotentialCustomer potentialCustomer,
+			Boolean isFirstCredit,
+			Integer activeNumbOfCredits,
+			Double rateOverdue) {
+		this.potentialCustomer = potentialCustomer;
+		this.isFirstCredit = isFirstCredit;
+		this.activeNumbOfCredits = activeNumbOfCredits;
 		this.rateOverdue = rateOverdue;
 	}
 }

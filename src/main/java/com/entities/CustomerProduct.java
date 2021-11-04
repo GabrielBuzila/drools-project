@@ -2,6 +2,16 @@ package com.entities;
 
 public class CustomerProduct {
 
+	public CustomerProduct(PotentialCustomer potentialCustomer, Product product, Double creditValue, Double interestPc,
+			Double interestValue, Integer period) {
+		this.potentialCustomer = potentialCustomer;
+		this.product = product;
+		this.creditValue = creditValue;
+		this.interestPc = interestPc;
+		this.interestValue = interestValue;
+		this.period = period;
+	}
+
 	PotentialCustomer potentialCustomer;
 	Product product;
 	Double creditValue;
